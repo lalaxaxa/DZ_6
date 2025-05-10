@@ -15,11 +15,11 @@ public class User {
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "age", nullable = false)
-    private int age;
-
     @Column(name = "email", nullable = false, unique = true)
     private String email;
+
+    @Column(name = "age", nullable = false)
+    private int age;
 
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
@@ -43,20 +43,19 @@ public class User {
         this.name = name;
     }
 
-    public int getAge() {
-        return age;
-    }
-
-    public void setAge(int age) {
-        this.age = age;
-    }
-
     public String getEmail() {
         return email;
     }
 
     public void setEmail(String email) {
         this.email = email;
+    }
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
     }
 
     public OffsetDateTime getCreatedAt() {

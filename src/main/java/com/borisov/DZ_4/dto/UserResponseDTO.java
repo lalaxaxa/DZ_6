@@ -1,12 +1,13 @@
 package com.borisov.DZ_4.dto;
 
-import jakarta.validation.constraints.*;
+import java.time.OffsetDateTime;
 
 public class UserResponseDTO {
     private int id;
     private String name;
     private String email;
     private Integer age;
+    private OffsetDateTime createdAt;
 
     public int getId() {
         return id;
@@ -39,4 +40,13 @@ public class UserResponseDTO {
     public void setAge(Integer age) {
         this.age = age;
     }
+
+    public OffsetDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(OffsetDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
 }

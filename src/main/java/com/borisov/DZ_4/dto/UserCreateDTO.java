@@ -42,4 +42,5 @@ public class UserCreateDTO {
     public void setAge(Integer age) {
         this.age = age;
     }
+
 }
