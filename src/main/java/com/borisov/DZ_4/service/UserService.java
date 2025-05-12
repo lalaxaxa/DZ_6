@@ -10,6 +10,7 @@ import com.borisov.DZ_4.util.UserNotFoundException;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Transactional(readOnly = true)
@@ -31,8 +32,11 @@ public class UserService {
     }
 
     public boolean existsByEmail(String email, Integer excludeId){
-        if (excludeId == null) return userRepository.findUserIdByEmail(email, null).isPresent();
-        else return userRepository.findUserIdByEmail(email, excludeId).isPresent();
+        if (excludeId == null) return userRepository.findByEmail(email).isPresent();
+        else {
+            Optional<User> user = userRepository.findByEmail(email);
+            return user.filter(value -> value.getId() != excludeId).isPresent();
+        }
     }
 
     @Transactional

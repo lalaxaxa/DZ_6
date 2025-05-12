@@ -11,12 +11,14 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Integer> {
 
-    @Query("""
+    /*@Query("""
             select u.id
             from User u
             where u.email= :email
             and (:excludeId is null or u.id <> :excludeId)
             """)
-    Optional<Integer> findUserIdByEmail(@Param("email") String email, @Param("excludeId") Integer excludeId);
+    Optional<Integer> findUserIdByEmail(@Param("email") String email, @Param("excludeId") Integer excludeId);*/
+    Optional<User> findByEmail(String email);
+
 
 }
