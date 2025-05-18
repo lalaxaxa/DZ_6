@@ -19,6 +19,15 @@ public class UserCreateDTO {
     @Max(value = 150)
     private Integer age;
 
+    public UserCreateDTO() {
+    }
+
+    public UserCreateDTO(String name, String email, Integer age) {
+        this.name = name;
+        this.email = email;
+        this.age = age;
+    }
+
     public String getName() {
         return name;
     }
@@ -42,5 +51,6 @@ public class UserCreateDTO {
     public void setAge(Integer age) {
         this.age = age;
     }
+
 
 }

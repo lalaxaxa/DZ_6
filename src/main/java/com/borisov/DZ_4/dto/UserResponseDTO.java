@@ -9,6 +9,17 @@ public class UserResponseDTO {
     private Integer age;
     private OffsetDateTime createdAt;
 
+    public UserResponseDTO() {
+    }
+
+    public UserResponseDTO(int id, String name, String email, Integer age, OffsetDateTime createdAt) {
+        this.id = id;
+        this.name = name;
+        this.email = email;
+        this.age = age;
+        this.createdAt = createdAt;
+    }
+
     public int getId() {
         return id;
     }
@@ -48,5 +59,6 @@ public class UserResponseDTO {
     public void setCreatedAt(OffsetDateTime createdAt) {
         this.createdAt = createdAt;
     }
+
 
 }

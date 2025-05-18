@@ -27,6 +27,14 @@ public class User {
     public User() {
     }
 
+    public User(int id, String name, String email, int age, OffsetDateTime createdAt) {
+        this.id = id;
+        this.name = name;
+        this.email = email;
+        this.age = age;
+        this.createdAt = createdAt;
+    }
+
     public int getId() {
         return id;
     }
@@ -65,4 +73,5 @@ public class User {
     public void setCreatedAt(OffsetDateTime createdAt) {
         this.createdAt = createdAt;
     }
+
 }

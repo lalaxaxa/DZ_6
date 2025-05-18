@@ -2,8 +2,6 @@ package com.borisov.DZ_4.controllers;
 
 import com.borisov.DZ_4.dto.UserCreateDTO;
 import com.borisov.DZ_4.dto.UserResponseDTO;
-import com.borisov.DZ_4.mappers.UserMapper;
-import com.borisov.DZ_4.models.User;
 import com.borisov.DZ_4.service.UserService;
 import com.borisov.DZ_4.util.UserEmailAlreadyExistException;
 import com.borisov.DZ_4.util.UserErrorResponse;
@@ -20,33 +18,27 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/users")
 public class UsersController {
     private final UserService userService;
-    private final UserMapper userMapper;
 
     @Autowired
-    public UsersController(UserService userService, UserMapper userMapper) {
+    public UsersController(UserService userService) {
         this.userService = userService;
-        this.userMapper = userMapper;
     }
 
 
     @GetMapping()
     public List<UserResponseDTO> getUsers(){
-        List<User> users = userService.findAll();
-        return users.stream().map(user -> userMapper.toResponseDTO(user))
-                .collect(Collectors.toList());
-
+        return userService.findAll();
     }
 
     @GetMapping("/{id}")
     public UserResponseDTO getUser(@PathVariable("id") int id){
-        User user = userService.findById(id);
-        return userMapper.toResponseDTO(user);
+        UserResponseDTO user = userService.findById(id);
+        return user;
     }
 
     @DeleteMapping("/{id}")
@@ -64,7 +56,7 @@ public class UsersController {
         if (userService.existsByEmail(userCreateDTO.getEmail(), null))
             throw new UserEmailAlreadyExistException();
 
-        int id = userService.save(userMapper.toEntity(userCreateDTO));
+        int id = userService.save(userCreateDTO);
         String locationPath = ServletUriComponentsBuilder
                 .fromCurrentRequest()       // "/users"
                 .path("/{id}")              // "/users/{id}"
@@ -87,8 +79,7 @@ public class UsersController {
         if (userService.existsByEmail(userCreateDTO.getEmail(), id))
             throw new UserEmailAlreadyExistException();
 
-        User updatedUser = userService.updateById(id, userMapper.toEntity(userCreateDTO));
-        return userMapper.toResponseDTO(updatedUser);
+        return userService.updateById(id, userCreateDTO);
     }
 
 

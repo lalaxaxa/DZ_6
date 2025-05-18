@@ -2,11 +2,10 @@ package com.borisov.DZ_4.controllers;
 
 import com.borisov.DZ_4.dto.UserCreateDTO;
 import com.borisov.DZ_4.dto.UserResponseDTO;
-import com.borisov.DZ_4.mappers.UserMapper;
-import com.borisov.DZ_4.models.User;
 import com.borisov.DZ_4.service.UserService;
 import com.borisov.DZ_4.testdata.UserTestData;
 import com.borisov.DZ_4.util.UserNotFoundException;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +14,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -29,29 +29,20 @@ class UsersControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-
     @MockBean
     private UserService userService;
 
-    @MockBean
-    private UserMapper userMapper;
-
-
+    public static final OffsetDateTime TIMESTAMP_1 = OffsetDateTime.parse("2000-01-01T00:00:00Z");
+    public static final OffsetDateTime TIMESTAMP_2 = OffsetDateTime.parse("2001-01-01T00:00:00Z");
 
 
     @Test
     @DisplayName("GET /users should return list of users")
     void getUsersShouldReturnList() throws Exception {
         // Arrange
-        User user1 = UserTestData.user(15, "Alice", "alice@example.com", 11, UserTestData.TIMESTAMP_1);
-        User user2 = UserTestData.user(18, "Bob", "bob@example.com", 22, UserTestData.TIMESTAMP_2);
-        UserResponseDTO dto1 = UserTestData.userResponseDTO(15, "Alice", "alice@example.com", 11, UserTestData.TIMESTAMP_1);
-        UserResponseDTO dto2 = UserTestData.userResponseDTO(18, "Bob", "bob@example.com", 22, UserTestData.TIMESTAMP_2);
-
-        when(userService.findAll()).thenReturn(Arrays.asList(user1, user2));
-        when(userMapper.toResponseDTO(user1)).thenReturn(dto1);
-        when(userMapper.toResponseDTO(user2)).thenReturn(dto2);
-
+        UserResponseDTO dto1 = new UserResponseDTO(15, "Alice", "alice@example.com", 11, TIMESTAMP_1);
+        UserResponseDTO dto2 = new UserResponseDTO(18, "Bob", "bob@example.com", 22, TIMESTAMP_2);
+        when(userService.findAll()).thenReturn(Arrays.asList(dto1, dto2));
         // Act & Assert
         mockMvc.perform(get("/users"))
                 .andExpect(status().isOk())
@@ -60,7 +51,6 @@ class UsersControllerTest {
                 .andExpect(jsonPath("$[0].name").value("Alice"))
                 .andExpect(jsonPath("$[1].id").value(18))
                 .andExpect(jsonPath("$[1].name").value("Bob"));
-
     }
 
     @Test
@@ -76,17 +66,12 @@ class UsersControllerTest {
 
 
 
-
-
     @Test
     @DisplayName("GET /users/{id} should return user when found")
     void getUserByIdShouldReturnUser() throws Exception {
         int test_id = 33;
-        User user = UserTestData.user(test_id, "Alice", "alice@example.com", 11, UserTestData.TIMESTAMP_1);
-        UserResponseDTO dto = UserTestData.userResponseDTO(test_id, "Alice", "alice@example.com", 11, UserTestData.TIMESTAMP_1);
-
-        when(userService.findById(test_id)).thenReturn(user);
-        when(userMapper.toResponseDTO(user)).thenReturn(dto);
+        UserResponseDTO dto = new UserResponseDTO(test_id, "Alice", "alice@example.com", 11, TIMESTAMP_1);
+        when(userService.findById(test_id)).thenReturn(dto);
 
         mockMvc.perform(get("/users/{id}", test_id))
                 .andExpect(status().isOk())
@@ -142,11 +127,10 @@ class UsersControllerTest {
     void createUserAndReturn201withLocationHeader() throws Exception {
         int test_id = 14;
         String json = "{\"name\":\"Bob\",\"email\":\"bob@example.com\",\"age\":22}";
-        User user = UserTestData.user(0, "Bob", "bob@example.com", 22, null);
+        UserCreateDTO user = new UserCreateDTO( "Bob", "bob@example.com", 22);
 
         when(userService.existsByEmail(anyString(), any(Integer.class))).thenReturn(false);
-        when(userMapper.toEntity(any(UserCreateDTO.class))).thenReturn(user);
-        when(userService.save(user)).thenReturn(test_id);
+        when(userService.save(any(UserCreateDTO.class))).thenReturn(test_id);
 
         mockMvc.perform(post("/users")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -223,16 +207,10 @@ class UsersControllerTest {
     void updateUserReturnUpdatedUser() throws Exception {
         int test_id = 11;
         String json = "{\"name\":\"AliceUpdated\",\"email\":\"alice@example.com\",\"age\":28}";
-        User userIn = UserTestData.user(0, "AliceUpdated", "alice@example.com", 28, null);
-        User userOut = UserTestData.user(test_id, "AliceUpdated", "alice@example.com", 28, UserTestData.TIMESTAMP_1);
-        UserResponseDTO userResponseDTO = UserTestData.userResponseDTO(test_id, "AliceUpdated", "alice@example.com", 28, UserTestData.TIMESTAMP_1);
-
+        UserResponseDTO userOut = new UserResponseDTO(test_id, "AliceUpdated", "alice@example.com", 28, TIMESTAMP_1);
 
         when(userService.existsByEmail(anyString(), any(Integer.class))).thenReturn(false);
-        when(userMapper.toEntity(any(UserCreateDTO.class))).thenReturn(userIn);
-        when(userService.updateById(test_id, userIn)).thenReturn(userOut);
-        when(userMapper.toResponseDTO(userOut)).thenReturn(userResponseDTO);
-
+        when(userService.updateById(eq(test_id), any(UserCreateDTO.class))).thenReturn(userOut);
 
         mockMvc.perform(patch("/users/{id}", test_id)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -264,11 +242,9 @@ class UsersControllerTest {
     void updateUserShouldReturnError404() throws Exception {
         int test_id = 11;
         String json = "{\"name\":\"AliceUpdated\",\"email\":\"alice@example.com\",\"age\":28}";
-        User userIn = UserTestData.user(0, "AliceUpdated", "alice@example.com", 28, null);
 
         when(userService.existsByEmail(anyString(), any(Integer.class))).thenReturn(false);
-        when(userMapper.toEntity(any(UserCreateDTO.class))).thenReturn(userIn);
-        when(userService.updateById(anyInt(), any(User.class))).thenThrow(new UserNotFoundException("id",String.valueOf(test_id)));
+        when(userService.updateById(anyInt(), any(UserCreateDTO.class))).thenThrow(new UserNotFoundException("id",String.valueOf(test_id)));
 
         mockMvc.perform(patch("/users/{id}", test_id)
                         .contentType(MediaType.APPLICATION_JSON)
