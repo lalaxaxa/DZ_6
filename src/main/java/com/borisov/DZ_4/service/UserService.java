@@ -2,10 +2,13 @@ package com.borisov.DZ_4.service;
 
 import com.borisov.DZ_4.dto.UserCreateDTO;
 import com.borisov.DZ_4.dto.UserResponseDTO;
+import com.borisov.DZ_4.messaging.events.UserCreatedEvent;
+import com.borisov.DZ_4.messaging.events.UserDeletedEvent;
 import com.borisov.DZ_4.mappers.UserMapper;
 import com.borisov.DZ_4.models.User;
 import com.borisov.DZ_4.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.borisov.DZ_4.util.UserNotFoundException;
@@ -21,11 +24,13 @@ import java.util.stream.Collectors;
 public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final ApplicationEventPublisher publisher;
 
     @Autowired
-    public UserService(UserRepository userRepository, UserMapper userMapper) {
+    public UserService(UserRepository userRepository, UserMapper userMapper, ApplicationEventPublisher publisher) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
+        this.publisher = publisher;
     }
 
     public List<UserResponseDTO> findAll(){
@@ -57,6 +62,7 @@ public class UserService {
         User user = userMapper.toEntity(userCreateDTO);
         completeUserCreation(user);
         userRepository.save(user);
+        publisher.publishEvent(new UserCreatedEvent(user.getEmail()));
         return user.getId();
     }
 
@@ -71,8 +77,9 @@ public class UserService {
 
     @Transactional
     public void deleteById(int id){
-        findEntityById(id);
+        User deleteUser = findEntityById(id);
         userRepository.deleteById(id);
+        publisher.publishEvent(new UserDeletedEvent(deleteUser.getEmail()));
     }
 
 

@@ -1,0 +1,11 @@
+spring:
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer   # по умолчанию
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer # для отправке JSON
+
+topic:
+  user-events: user-events-topic
+#@Value("${topic.user-events}")
+#private String userEventsTopic;

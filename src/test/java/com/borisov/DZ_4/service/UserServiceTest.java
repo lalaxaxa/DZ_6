@@ -3,6 +3,8 @@ package com.borisov.DZ_4.service;
 import com.borisov.DZ_4.dto.UserCreateDTO;
 import com.borisov.DZ_4.dto.UserResponseDTO;
 import com.borisov.DZ_4.mappers.UserMapper;
+import com.borisov.DZ_4.messaging.events.UserCreatedEvent;
+import com.borisov.DZ_4.messaging.events.UserDeletedEvent;
 import com.borisov.DZ_4.models.User;
 import com.borisov.DZ_4.repositories.UserRepository;
 import com.borisov.DZ_4.util.UserNotFoundException;
@@ -10,10 +12,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -30,15 +34,18 @@ class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private ApplicationEventPublisher publisher;
 
     @Spy
     private UserMapper userMapper = new UserMapper(new ModelMapper());
 
     private UserService userService;
 
+
     @BeforeEach
     void setUp() {
-        userService = new UserService(userRepository, userMapper);
+        userService = new UserService(userRepository, userMapper, publisher);
     }
 
     @Test
@@ -60,8 +67,7 @@ class UserServiceTest {
     @Test
     @DisplayName("findById existing id returns DTO")
     void findByIdShouldReturnDto() {
-        User u = new User();
-        u.setId(5); u.setName("Carol"); u.setEmail("c@example.com"); u.setAge(30);
+        User u = new User(5, "Carol", "c@example.com", 30, null);
         when(userRepository.findById(5)).thenReturn(Optional.of(u));
 
         UserResponseDTO dto = userService.findById(5);
@@ -100,17 +106,39 @@ class UserServiceTest {
     @DisplayName("save should map, set fields and return id")
     void saveShouldMapAndReturnId() {
         UserCreateDTO dto = new UserCreateDTO("Dan", "d@example.com", 40);
-        doAnswer(invocation -> {
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
             User u = invocation.getArgument(0);
             u.setId(20);
             return u;
-        }).when(userRepository).save(any(User.class));
+        });
 
         int id = userService.save(dto);
 
         assertEquals(20, id);
         verify(userMapper).toEntity(dto);
         verify(userRepository).save(any(User.class));
+    }
+
+    @Test
+    @DisplayName("save should published UserCreatedEvent")
+    void savePublishEventAfterUserCreated() {
+        UserCreateDTO dto = new UserCreateDTO("Dan", "d@example.com", 40);
+        int id = userService.save(dto);
+
+        ArgumentCaptor<UserCreatedEvent> captor = ArgumentCaptor.forClass(UserCreatedEvent.class);
+        verify(publisher).publishEvent(captor.capture());
+        assertEquals("d@example.com", captor.getValue().getEmail());
+
+    }
+
+    @Test
+    @DisplayName("save should throw exception and not published event")
+    void saveThrowExceptionAndAndNotPublishedEvent() {
+        UserCreateDTO dto = new UserCreateDTO("Dan", "d@example.com", 40);
+        when(userRepository.save(any(User.class))).thenThrow(new RuntimeException("DB Error"));
+        assertThrows(RuntimeException.class, () -> userService.save(dto));
+        verify(publisher, never()).publishEvent(any());
+
     }
 
     @Test
@@ -140,11 +168,23 @@ class UserServiceTest {
         assertDoesNotThrow(() -> userService.deleteById(7));
         verify(userRepository).deleteById(7);
     }
+    @Test
+    @DisplayName("deleteById should published UserDeletedEvent")
+    void deleteByIdPublishEventAfterUserDeleted() {
+        User u = new User(); u.setId(7); u.setEmail("d@example.com");
+        when(userRepository.findById(7)).thenReturn(Optional.of(u));
+        userService.deleteById(7);
+
+        ArgumentCaptor<UserDeletedEvent>  captor = ArgumentCaptor.forClass(UserDeletedEvent.class);
+        verify(publisher).publishEvent(captor.capture());
+        assertEquals("d@example.com", captor.getValue().getEmail());
+    }
 
     @Test
-    @DisplayName("deleteById non-existing throws")
-    void deleteByIdNotFoundShouldThrow() {
+    @DisplayName("deleteById non-existing throws and not published event")
+    void deleteByIdNotFoundShouldThrowAndNotPublishedEvent() {
         when(userRepository.findById(4)).thenReturn(Optional.empty());
         assertThrows(UserNotFoundException.class, () -> userService.deleteById(4));
+        verify(publisher, never()).publishEvent(any());
     }
 }
