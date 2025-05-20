@@ -1,10 +1,9 @@
 package com.borisov.DZ_4.service;
 
+import borisov.core.UserChangedEvent;
 import com.borisov.DZ_4.dto.UserCreateDTO;
 import com.borisov.DZ_4.dto.UserResponseDTO;
 import com.borisov.DZ_4.mappers.UserMapper;
-import com.borisov.DZ_4.messaging.events.UserCreatedEvent;
-import com.borisov.DZ_4.messaging.events.UserDeletedEvent;
 import com.borisov.DZ_4.models.User;
 import com.borisov.DZ_4.repositories.UserRepository;
 import com.borisov.DZ_4.util.UserNotFoundException;
@@ -123,11 +122,18 @@ class UserServiceTest {
     @DisplayName("save should published UserCreatedEvent")
     void savePublishEventAfterUserCreated() {
         UserCreateDTO dto = new UserCreateDTO("Dan", "d@example.com", 40);
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User u = invocation.getArgument(0);
+            u.setId(20);
+            return u;
+        });
         int id = userService.save(dto);
 
-        ArgumentCaptor<UserCreatedEvent> captor = ArgumentCaptor.forClass(UserCreatedEvent.class);
+        ArgumentCaptor<UserChangedEvent> captor = ArgumentCaptor.forClass(UserChangedEvent.class);
         verify(publisher).publishEvent(captor.capture());
+        assertEquals(20, captor.getValue().getId());
         assertEquals("d@example.com", captor.getValue().getEmail());
+        assertEquals(UserChangedEvent.Operation.CREATE, captor.getValue().getOperation());
 
     }
 
@@ -175,9 +181,12 @@ class UserServiceTest {
         when(userRepository.findById(7)).thenReturn(Optional.of(u));
         userService.deleteById(7);
 
-        ArgumentCaptor<UserDeletedEvent>  captor = ArgumentCaptor.forClass(UserDeletedEvent.class);
+
+        ArgumentCaptor<UserChangedEvent> captor = ArgumentCaptor.forClass(UserChangedEvent.class);
         verify(publisher).publishEvent(captor.capture());
+        assertEquals(7, captor.getValue().getId());
         assertEquals("d@example.com", captor.getValue().getEmail());
+        assertEquals(UserChangedEvent.Operation.DELETE, captor.getValue().getOperation());
     }
 
     @Test

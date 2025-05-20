@@ -2,9 +2,8 @@ package com.borisov.DZ_4.service;
 
 import com.borisov.DZ_4.dto.UserCreateDTO;
 import com.borisov.DZ_4.dto.UserResponseDTO;
-import com.borisov.DZ_4.messaging.events.UserCreatedEvent;
-import com.borisov.DZ_4.messaging.events.UserDeletedEvent;
 import com.borisov.DZ_4.mappers.UserMapper;
+import borisov.core.UserChangedEvent;
 import com.borisov.DZ_4.models.User;
 import com.borisov.DZ_4.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,7 +61,8 @@ public class UserService {
         User user = userMapper.toEntity(userCreateDTO);
         completeUserCreation(user);
         userRepository.save(user);
-        publisher.publishEvent(new UserCreatedEvent(user.getEmail()));
+        publisher.publishEvent(new UserChangedEvent(user.getId(), user.getEmail(),
+                UserChangedEvent.Operation.CREATE));
         return user.getId();
     }
 
@@ -79,7 +79,8 @@ public class UserService {
     public void deleteById(int id){
         User deleteUser = findEntityById(id);
         userRepository.deleteById(id);
-        publisher.publishEvent(new UserDeletedEvent(deleteUser.getEmail()));
+        publisher.publishEvent(new UserChangedEvent(deleteUser.getId(), deleteUser.getEmail(),
+                UserChangedEvent.Operation.DELETE));
     }
 
 

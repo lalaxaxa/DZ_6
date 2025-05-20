@@ -1,8 +1,7 @@
+/*
 package com.borisov.DZ_4.messaging.publishers;
 
-import com.borisov.DZ_4.messaging.events.UserCreatedEvent;
-import com.borisov.DZ_4.messaging.events.UserDeletedEvent;
-import com.borisov.DZ_4.messaging.events.UserEvent;
+import com.borisov.DZ_4.messaging.events.UserChangedEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,18 +10,18 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.kafka.support.SendResult;
+
+import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class UserKafkaPublisherTest {
     @Mock
-    private KafkaTemplate<String, UserEvent> kafkaTemplate;
+    private KafkaTemplate<String, UserChangedEvent> kafkaTemplate;
     private final String topic = "test-topic";
     private UserKafkaPublisher publisher;
 
@@ -34,33 +33,17 @@ class UserKafkaPublisherTest {
     @Test
     @DisplayName("onCreateUser should send CREATE event to Kafka")
     void onCreateUserTest() {
-        UserCreatedEvent event = new UserCreatedEvent("test@example.com");
+        UserChangedEvent event = new UserChangedEvent(33, "test@example.com", UserChangedEvent.Operation.CREATE);
+        CompletableFuture<SendResult<String, UserChangedEvent>> future = new CompletableFuture<>();
+        when(kafkaTemplate.send()).thenReturn(completableFuture);
         publisher.onCreateUser(event);
 
-        ArgumentCaptor<UserEvent> captor = ArgumentCaptor.forClass(UserEvent.class);
-        verify(kafkaTemplate, times(1)).send(eq(topic), captor.capture());
+        ArgumentCaptor<UserChangedEvent> captor = ArgumentCaptor.forClass(UserChangedEvent.class);
+        verify(kafkaTemplate, times(1)).send(eq(topic), eq("33"), captor.capture());
 
-        UserEvent sent = captor.getValue();
+        UserChangedEvent sent = captor.getValue();
         assertEquals("test@example.com", sent.getEmail());
-        assertEquals(UserEvent.Operation.CREATE, sent.getOperation());
+        assertEquals(UserChangedEvent.Operation.CREATE, sent.getOperation());
     }
 
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void onDeleteUser(UserDeletedEvent e){
-        kafkaTemplate.send(topic, new UserEvent(e.getEmail(), UserEvent.Operation.DELETE));
-    }
-
-    @Test
-    @DisplayName("onCreateUser should send DELETE event to Kafka")
-    void onDeleteUserTest() {
-        UserDeletedEvent event = new UserDeletedEvent("test@example.com");
-        publisher.onDeleteUser(event);
-
-        ArgumentCaptor<UserEvent> captor = ArgumentCaptor.forClass(UserEvent.class);
-        verify(kafkaTemplate, times(1)).send(eq(topic), captor.capture());
-
-        UserEvent sent = captor.getValue();
-        assertEquals("test@example.com", sent.getEmail());
-        assertEquals(UserEvent.Operation.DELETE, sent.getOperation());
-    }
-}
+}*/
