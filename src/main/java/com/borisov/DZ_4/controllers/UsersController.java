@@ -7,7 +7,10 @@ import com.borisov.DZ_4.util.UserEmailAlreadyExistException;
 import com.borisov.DZ_4.util.UserErrorResponse;
 import com.borisov.DZ_4.util.UserNotFoundException;
 import com.borisov.DZ_4.util.UserValidationException;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -15,13 +18,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/users")
 public class UsersController {
+    private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
     private final UserService userService;
 
     @Autowired
@@ -50,23 +53,17 @@ public class UsersController {
     @PostMapping()
     public ResponseEntity<HttpStatus> create(
             @RequestBody @Valid UserCreateDTO userCreateDTO,
-            BindingResult bindingResult){
+            BindingResult bindingResult,
+            HttpServletRequest request){
         //check valid and check email unique
         if (bindingResult.hasErrors()) throw new UserValidationException(getValidErrMsg(bindingResult));
         if (userService.existsByEmail(userCreateDTO.getEmail(), null))
             throw new UserEmailAlreadyExistException();
 
         int id = userService.save(userCreateDTO);
-        String locationPath = ServletUriComponentsBuilder
-                .fromCurrentRequest()       // "/users"
-                .path("/{id}")              // "/users/{id}"
-                .buildAndExpand(id)         // подставляем id
-                .toUri()                    // получается URI "http://localhost/users/123"
-                .getPath();                 // берём только "/users/123"
-
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .header(HttpHeaders.LOCATION, locationPath)
+                .header(HttpHeaders.LOCATION, "/users/" + id)
                 .build();
     }
 
@@ -97,18 +94,21 @@ public class UsersController {
 
     @ExceptionHandler
     private ResponseEntity<UserErrorResponse> handleException(UserNotFoundException e){
+        LOGGER.error(e.getMessage());
         UserErrorResponse response = new UserErrorResponse(e.getMessage(), System.currentTimeMillis());
         return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler
     private ResponseEntity<UserErrorResponse> handleException(UserValidationException e) {
+        LOGGER.error(e.getMessage());
         UserErrorResponse response = new UserErrorResponse(e.getMessage(), System.currentTimeMillis());
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler
     private ResponseEntity<UserErrorResponse> handleException(UserEmailAlreadyExistException e) {
+        LOGGER.error(e.getMessage());
         UserErrorResponse response = new UserErrorResponse(e.getMessage(), System.currentTimeMillis());
         return new ResponseEntity<>(response, HttpStatus.CONFLICT);
     }
