@@ -1,12 +1,20 @@
 package com.borisov.DZ_4.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.time.OffsetDateTime;
 
+@Schema(description = "Пользователь")
 public class UserResponseDTO {
+    @Schema(description = "ID", example = "1")
     private int id;
+    @Schema(description = "Имя", example = "Bob")
     private String name;
+    @Schema(description = "Электронная почта", example = "bob@example.com")
     private String email;
+    @Schema(description = "Возраст", example = "30")
     private Integer age;
+    @Schema(description = "Дата и время создания записи" , example = "2025-05-22T07:47:07.350053Z")
     private OffsetDateTime createdAt;
 
     public UserResponseDTO() {

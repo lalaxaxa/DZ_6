@@ -57,13 +57,13 @@ public class UserService {
     }
 
     @Transactional
-    public int save(UserCreateDTO userCreateDTO){
+    public UserResponseDTO save(UserCreateDTO userCreateDTO){
         User user = userMapper.toEntity(userCreateDTO);
         completeUserCreation(user);
         userRepository.save(user);
         publisher.publishEvent(new UserChangedEvent(user.getId(), user.getEmail(),
                 UserChangedEvent.Operation.CREATE));
-        return user.getId();
+        return userMapper.toResponseDTO(user);
     }
 
     @Transactional

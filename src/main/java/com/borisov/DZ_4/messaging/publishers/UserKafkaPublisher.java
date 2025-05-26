@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
@@ -15,6 +16,8 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import java.util.concurrent.CompletableFuture;
 
 @Component
+@ConditionalOnProperty(name = "kafka.enabled", havingValue = "true", matchIfMissing = true)
+
 public class UserKafkaPublisher {
     private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
     private final KafkaTemplate<String, UserChangedEvent> kafkaTemplate;

@@ -10,3 +10,5 @@ CREATE TABLE Users(
     created_at timestamp WITH TIME ZONE NOT NULL
 )
 ```
+
+Kafka отключена, что включить установить в application.properties "kafka.enabled=true"

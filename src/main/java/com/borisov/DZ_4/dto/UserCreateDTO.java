@@ -1,5 +1,6 @@
 package com.borisov.DZ_4.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 
 public class UserCreateDTO {
@@ -7,16 +8,19 @@ public class UserCreateDTO {
     //spring.web.locale=ru
     @NotEmpty
     @Size(min = 2, max = 100)
+    @Schema(description = "Имя", example = "Bob")
     private String name;
 
     @NotEmpty
     @Size(min = 6, max = 100)
     @Email
+    @Schema(description = "Электронная почта", example = "bob@example.com")
     private String email;
 
     @NotNull
     @Min(value = 0)
     @Max(value = 150)
+    @Schema(description = "Возраст", example = "30")
     private Integer age;
 
     public UserCreateDTO() {
